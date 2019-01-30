@@ -301,7 +301,7 @@ _COMMON_ATTRS = {
         default = Label("@mono//bin:mcs"),
         allow_files = True,
         single_file = True,
-        executable = True
+        executable = True,
         cfg = "host",
     ),
 }

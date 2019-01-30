@@ -22,9 +22,9 @@ def _make_csc_flag(flag_start, flag_name, flag_value=None):
     return flag_start + flag_name + (":" + flag_value if flag_value else "")
 
 def _make_csc_deps(deps, extra_files=[]):
-    dlls = set()
-    refs = set()
-    transitive_dlls = set()
+    dlls = depset()
+    refs = depset()
+    transitive_dlls = depset()
     for dep in deps:
         if hasattr(dep, "target_type"):
           dep_type = getattr(dep, "target_type")
@@ -36,7 +36,7 @@ def _make_csc_deps(deps, extra_files=[]):
           if dep.transitive_dlls:
               transitive_dlls += dep.transitive_dlls
     return struct(
-        dlls = dlls + set(extra_files),
+        dlls = dlls + depset(extra_files),
         refs = refs,
         transitive_dlls = transitive_dlls)
 
@@ -136,7 +136,7 @@ def _csc_get_output(ctx):
 
 def _csc_collect_inputs(ctx, extra_files=[]):
     depinfo = _make_csc_deps(ctx.attr.deps, extra_files=extra_files)
-    inputs = set(ctx.files.srcs) + depinfo.dlls + depinfo.transitive_dlls
+    inputs = depset(ctx.files.srcs) + depinfo.dlls + depinfo.transitive_dlls
     srcs = [src.path for src in ctx.files.srcs]
     return struct(
         depinfo=depinfo,
@@ -159,7 +159,7 @@ def _csc_compile_action(ctx, assembly, all_outputs, collected_inputs, extra_refs
 def _cs_runfiles(ctx, outputs, depinfo):
     return ctx.runfiles(
         files = outputs,
-        transitive_files = set(depinfo.dlls + depinfo.transitive_dlls) or None)
+        transitive_files = depset(depinfo.dlls + depinfo.transitive_dlls) or None)
 
 
 def _csc_compile_impl(ctx):
@@ -186,7 +186,7 @@ def _csc_compile_impl(ctx):
                   srcs = srcs,
                   target_type=ctx.attr._target_type,
                   out = output,
-                  dlls = set([output]),
+                  dlls = depset([output]),
                   transitive_dlls = depinfo.dlls,
                   runfiles=runfiles)
 
@@ -214,7 +214,7 @@ def _cs_nunit_run_impl(ctx):
                   srcs=srcs,
                   target_type=ctx.attr._target_type,
                   out=output,
-                  dlls = set([output]) if hasattr(ctx.outputs, "csc_lib") else None,
+                  dlls = depset([output]) if hasattr(ctx.outputs, "csc_lib") else None,
                   transitive_dlls = depinfo.dlls,
                   runfiles=runfiles)
 
